@@ -3,129 +3,65 @@
 <head>
   <meta charset="UTF-8">
   <title>Tebak Angka Challenge</title>
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
   <style>
-    body {
-      font-family: 'Fredoka One', cursive;
-      text-align: center;
-      background: linear-gradient(135deg, #74ebd5 0%, #9face6 100%);
-      color: #333;
-      margin: 0;
-      padding: 0;
-    }
-    .container {
-      margin-top: 60px;
-      background: white;
-      padding: 30px;
-      border-radius: 15px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-      display: inline-block;
-    }
-    h1 {
-      color: #4a47a3;
-      margin-bottom: 20px;
-    }
-    input {
-      padding: 12px;
-      font-size: 18px;
-      width: 120px;
-      text-align: center;
-      border: 2px solid #4a47a3;
-      border-radius: 8px;
-    }
-    button {
-      padding: 12px 25px;
-      font-size: 16px;
-      margin: 10px;
-      cursor: pointer;
-      border: none;
-      border-radius: 8px;
-      background: #4a47a3;
-      color: white;
-      transition: 0.3s;
-    }
-    button:hover {
-      background: #6c63ff;
-      transform: scale(1.05);
-    }
-    .feedback {
-      margin-top: 20px;
-      font-size: 20px;
-      font-weight: bold;
-      min-height: 40px;
-    }
-    .progress {
-      margin-top: 10px;
-      font-size: 16px;
-      color: #555;
-    }
-    .win {
-      color: #28a745;
-      animation: bounce 1s infinite;
-    }
-    .lose {
-      color: #dc3545;
-      animation: shake 0.5s;
-    }
-    @keyframes bounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
-    }
-    @keyframes shake {
-      0% { transform: translateX(0); }
-      25% { transform: translateX(-5px); }
-      50% { transform: translateX(5px); }
-      75% { transform: translateX(-5px); }
-      100% { transform: translateX(0); }
-    }
+    body { font-family: Arial, sans-serif; text-align: center; background: #74ebd5; }
+    .container { margin-top: 40px; background: white; padding: 20px; border-radius: 10px; display: inline-block; }
+    h1 { color: #4a47a3; }
+    input, button { padding: 10px; margin: 5px; }
+    .feedback { margin-top: 15px; font-weight: bold; }
+    #leaderboard { margin-top: 20px; text-align: left; }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>🎲 Tebak Angka Challenge</h1>
-    <p>Tebak angka antara 1–20. Kamu hanya punya 4 percobaan 🤯</p>
+    <p>Masukkan nama pemain:</p>
+    <input type="text" id="namaPemain" placeholder="Nama kamu">
+    <button onclick="mulaiGame()">Mulai Game</button>
     
-    <input type="number" id="guess" min="1" max="20" placeholder="Angka">
-    <br>
-    <button onclick="checkGuess()">Submit</button>
-    <button onclick="resetGame()">Main Lagi 🔄</button>
-    
-    <div class="progress" id="progress">Percobaan: 0/4</div>
-    <div class="feedback" id="feedback"></div>
+    <div id="gameArea" style="display:none;">
+      <p>Tebak angka antara 1–20. Kamu hanya punya 4 percobaan 🤯</p>
+      <input type="number" id="guess" min="1" max="20" placeholder="Angka">
+      <button onclick="checkGuess()">Submit</button>
+      <button onclick="resetGame()">Main Lagi 🔄</button>
+      <div id="progress">Percobaan: 0/4</div>
+      <div class="feedback" id="feedback"></div>
+    </div>
+
+    <div id="leaderboard"></div>
   </div>
 
   <script>
-    let angkaRahasia, percobaan, batas;
-    resetGame();
+    let angkaRahasia, percobaan, batas, skorTotal = 0, nama;
+
+    function mulaiGame() {
+      nama = document.getElementById("namaPemain").value;
+      if (!nama) { alert("Isi nama dulu!"); return; }
+      document.getElementById("gameArea").style.display = "block";
+      resetGame();
+      tampilkanLeaderboard();
+    }
 
     function checkGuess() {
       let tebakan = parseInt(document.getElementById("guess").value);
       percobaan++;
-      let poin;
-
-      if (percobaan === 1) poin = 100;
-      else if (percobaan === 2) poin = 75;
-      else if (percobaan === 3) poin = 50;
-      else poin = 25;
+      let poin = percobaan === 1 ? 100 : percobaan === 2 ? 75 : percobaan === 3 ? 50 : 25;
 
       document.getElementById("progress").innerText = "Percobaan: " + percobaan + "/" + batas;
 
       if (tebakan === angkaRahasia) {
+        skorTotal += poin;
+        simpanLeaderboard(nama, skorTotal);
         document.getElementById("feedback").innerText =
-          `🎉 Kamu menang! Tebakanmu benar ${angkaRahasia}. Kamu dapat ${poin} poin 🎯`;
-        document.getElementById("feedback").className = "feedback win";
+          `🎉 Kamu menang! Tebakanmu benar ${angkaRahasia}. Kamu dapat ${poin} poin 🎯. Skor total: ${skorTotal} ⭐`;
+        tampilkanLeaderboard();
       } else if (percobaan >= batas) {
         document.getElementById("feedback").innerText =
           `😂 Kamu kehabisan percobaan. Angka yang benar adalah ${angkaRahasia}`;
-        document.getElementById("feedback").className = "feedback lose";
       } else if (tebakan < angkaRahasia) {
-        document.getElementById("feedback").innerText =
-          `${tebakan} terlalu kecil 👶. Kamu kehilangan ${poin} poin 😾`;
-        document.getElementById("feedback").className = "feedback";
+        document.getElementById("feedback").innerText = `${tebakan} terlalu kecil 👶. Kamu kehilangan ${poin} poin 😾`;
       } else {
-        document.getElementById("feedback").innerText =
-          `${tebakan} terlalu besar 🏔️. Kamu kehilangan ${poin} poin ⏳`;
-        document.getElementById("feedback").className = "feedback";
+        document.getElementById("feedback").innerText = `${tebakan} terlalu besar 🏔️. Kamu kehilangan ${poin} poin ⏳`;
       }
     }
 
@@ -135,8 +71,29 @@
       batas = 4;
       document.getElementById("progress").innerText = "Percobaan: 0/4";
       document.getElementById("feedback").innerText = "";
-      document.getElementById("feedback").className = "feedback";
       document.getElementById("guess").value = "";
+    }
+
+    function simpanLeaderboard(nama, skor) {
+      let leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
+      let existing = leaderboard.find(player => player.nama === nama);
+      if (existing) {
+        existing.skor = skor; // update skor
+      } else {
+        leaderboard.push({ nama: nama, skor: skor });
+      }
+      leaderboard.sort((a, b) => b.skor - a.skor);
+      localStorage.setItem("leaderboard", JSON.stringify(leaderboard));
+    }
+
+    function tampilkanLeaderboard() {
+      let leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
+      let html = "<h2>🏆 Leaderboard</h2><ol>";
+      leaderboard.forEach(player => {
+        html += `<li>${player.nama} - ${player.skor} ⭐</li>`;
+      });
+      html += "</ol>";
+      document.getElementById("leaderboard").innerHTML = html;
     }
   </script>
 </body>
